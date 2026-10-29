@@ -1,0 +1,1142 @@
+/* ==========================================================================
+   WebXR Passenger Station Pavilion - Stylesheet
+   Designed for DVGUPS Coursework (Department of CT&EG)
+   ========================================================================== */
+
+:root {
+    --bg-dark: #0d1117;
+    --panel-bg: rgba(22, 27, 34, 0.85);
+    --panel-border: rgba(255, 255, 255, 0.12);
+    --accent-red: #e21a1a;        /* Russian Railways brand accent */
+    --accent-blue: #2f81f7;
+    --accent-yellow: #f1c40f;
+    --text-primary: #f0f6fc;
+    --text-secondary: #8b949e;
+    --text-muted: #6e7681;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --shadow-glass: 0 16px 36px rgba(0, 0, 0, 0.45);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    overflow: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+body {
+    font-family: var(--font-sans);
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+}
+
+/* ==========================================================================
+   Header Navigation
+   ========================================================================== */
+.app-header {
+    height: 64px;
+    background: rgba(13, 17, 23, 0.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--panel-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 100;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.header-center {
+    display: flex;
+    align-items: center;
+}
+
+.station-clock-widget {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(241, 196, 15, 0.3);
+    border-radius: var(--radius-sm);
+    padding: 6px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-mono);
+    box-shadow: 0 0 12px rgba(241, 196, 15, 0.15);
+}
+
+.clock-icon {
+    font-size: 13px;
+}
+
+.clock-time {
+    color: #f1c40f;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+.clock-temp {
+    color: #38bdf8;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.clock-status {
+    color: var(--text-muted);
+    font-size: 11px;
+    border-left: 1px solid var(--panel-border);
+    padding-left: 8px;
+}
+
+.rzd-badge {
+    background: linear-gradient(135deg, #e21a1a, #b01010);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    text-transform: uppercase;
+}
+
+.project-titles h1 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.project-titles .subtitle {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.author-tag {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.author-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.author-group {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--accent-blue);
+}
+
+.action-btn {
+    background: rgba(47, 129, 247, 0.15);
+    color: #58a6ff;
+    border: 1px solid rgba(47, 129, 247, 0.4);
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+    background: rgba(47, 129, 247, 0.25);
+    border-color: #58a6ff;
+    transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   Model Viewer Main Canvas
+   ========================================================================== */
+.viewer-container {
+    flex: 1 1 auto;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+model-viewer {
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 50% 30%, #1e2632 0%, #0d1117 75%);
+    --poster-color: transparent;
+}
+
+/* Snow particle system canvas */
+.snow-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 30;
+    transition: opacity 0.5s ease;
+}
+
+.snow-canvas.hidden {
+    opacity: 0;
+}
+
+/* AR Launch Button */
+.ar-floating-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #238636, #2ea043);
+    color: #ffffff;
+    border: none;
+    padding: 12px 22px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 10px 24px rgba(46, 160, 67, 0.35);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 50;
+}
+
+.ar-floating-btn:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 14px 30px rgba(46, 160, 67, 0.45);
+}
+
+/* Progress bar */
+.progress-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--accent-blue);
+    transition: width 0.3s ease;
+}
+
+/* ==========================================================================
+   Interactive 3D Hotspots
+   ========================================================================== */
+.hotspot {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    outline: none;
+}
+
+.hotspot:hover {
+    transform: scale(1.15);
+}
+
+.hotspot-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e21a1a, #ff4d4d);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 4px rgba(226, 26, 26, 0.35), 0 8px 16px rgba(0, 0, 0, 0.5);
+    animation: pulseGlow 2.4s infinite ease-in-out;
+}
+
+@keyframes pulseGlow {
+    0% { box-shadow: 0 0 0 0 rgba(226, 26, 26, 0.6), 0 8px 16px rgba(0,0,0,0.5); }
+    70% { box-shadow: 0 0 0 14px rgba(226, 26, 26, 0), 0 8px 16px rgba(0,0,0,0.5); }
+    100% { box-shadow: 0 0 0 0 rgba(226, 26, 26, 0), 0 8px 16px rgba(0,0,0,0.5); }
+}
+
+.hotspot-label {
+    background: rgba(13, 17, 23, 0.90);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--panel-border);
+    color: var(--text-primary);
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    opacity: 0.95;
+}
+
+.hotspot.hidden {
+    display: none !important;
+}
+
+/* Avoid overlap between hotspots and dimensions when dimension mode is active */
+.dimensions-active .hotspot {
+    transform: translateY(-28px);
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.dimensions-active .hotspot:hover {
+    transform: translateY(-28px) scale(1.15);
+}
+
+.dimensions-active .hotspot-label {
+    transform: translateY(-6px);
+    background: rgba(13, 17, 23, 0.96);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.65);
+    border-color: rgba(47, 129, 247, 0.4);
+}
+
+/* ==========================================================================
+   Engineering Dimension Lines & Rulers (ГОСТ 9238 / СТО РЖД)
+   ========================================================================== */
+.dim-hotspot {
+    background: transparent;
+    border: none;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.dim-hotspot.hidden {
+    display: none !important;
+}
+
+.dim-badge {
+    background: rgba(14, 165, 233, 0.95);
+    color: #ffffff;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 4px 16px rgba(14, 165, 233, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.3);
+    white-space: nowrap;
+    border-left: 3px solid #ffffff;
+    border-right: 3px solid #ffffff;
+    letter-spacing: 0.5px;
+    animation: dimPulse 3s infinite ease-in-out;
+}
+
+@keyframes dimPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+}
+
+/* ==========================================================================
+   Guided Tour Dynamic Banner
+   ========================================================================== */
+.tour-banner {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(56, 189, 248, 0.5);
+    border-radius: var(--radius-md);
+    padding: 12px 20px;
+    width: 480px;
+    max-width: calc(100vw - 40px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.2);
+    z-index: 70;
+    transition: all 0.35s ease;
+}
+
+.tour-banner.hidden {
+    display: none !important;
+}
+
+.tour-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.tour-tag {
+    background: #0284c7;
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.8px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.tour-step-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #f8fafc;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tour-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.tour-close-btn:hover {
+    color: white;
+}
+
+.tour-progress-track {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.tour-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #38bdf8, #0284c7);
+    transition: width 0.3s linear;
+}
+
+.ctrl-btn.highlight {
+    background: linear-gradient(135deg, rgba(2, 132, 199, 0.35), rgba(14, 165, 233, 0.45));
+    border: 1px solid rgba(56, 189, 248, 0.6);
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.ctrl-btn.highlight:hover {
+    background: linear-gradient(135deg, rgba(2, 132, 199, 0.5), rgba(14, 165, 233, 0.6));
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+}
+
+/* ==========================================================================
+   Side Inspector Panel
+   ========================================================================== */
+.info-panel {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    width: 380px;
+    max-width: calc(100vw - 48px);
+    background: var(--panel-bg);
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    box-shadow: var(--shadow-glass);
+    z-index: 60;
+    transform: translateX(-420px);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.info-panel.visible {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.panel-tag {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #58a6ff;
+}
+
+.close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-btn:hover {
+    color: var(--text-primary);
+}
+
+.info-panel h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    line-height: 1.3;
+}
+
+.info-panel p {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin-bottom: 18px;
+}
+
+.specs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    margin-bottom: 18px;
+}
+
+.spec-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.spec-label {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.spec-val {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.focus-btn {
+    width: 100%;
+    background: rgba(47, 129, 247, 0.2);
+    border: 1px solid rgba(47, 129, 247, 0.5);
+    color: #58a6ff;
+    padding: 10px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.focus-btn:hover {
+    background: rgba(47, 129, 247, 0.3);
+}
+
+/* ==========================================================================
+   Bottom Controls Bar
+   ========================================================================== */
+.controls-bar {
+    position: fixed;
+    bottom: max(20px, env(safe-area-inset-bottom, 20px));
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--panel-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-lg);
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: var(--shadow-glass);
+    z-index: 90;
+    max-width: calc(100vw - 32px);
+}
+
+.ctrl-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.ctrl-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.ctrl-btn.active {
+    color: #ffffff;
+    background: rgba(47, 129, 247, 0.25);
+    border: 1px solid rgba(47, 129, 247, 0.4);
+}
+
+/* ==========================================================================
+   Modal Dialog (QR Code)
+   ========================================================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-card {
+    background: #161b22;
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    width: 380px;
+    max-width: 90vw;
+    text-align: center;
+    position: relative;
+    box-shadow: var(--shadow-glass);
+}
+
+.modal-badge {
+    display: inline-block;
+    background: rgba(46, 160, 67, 0.2);
+    color: #3fb950;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.modal-card h3 {
+    font-size: 18px;
+    margin-bottom: 6px;
+}
+
+.modal-hint {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    margin-bottom: 14px;
+}
+
+.qr-mode-switch {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px;
+    border-radius: var(--radius-sm);
+}
+
+.mode-tab {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 6px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mode-tab.active {
+    background: rgba(47, 129, 247, 0.3);
+    color: #58a6ff;
+    border: 1px solid rgba(47, 129, 247, 0.5);
+}
+
+.qr-input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.url-input {
+    flex: 1;
+    background: #0d1117;
+    border: 1px solid var(--panel-border);
+    color: var(--text-primary);
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-family: var(--font-mono);
+}
+
+.apply-btn {
+    background: #238636;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.qr-box {
+    background: #ffffff;
+    padding: 12px;
+    border-radius: var(--radius-md);
+    display: inline-block;
+    margin-bottom: 12px;
+}
+
+.qr-current-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+}
+
+.qr-current-link code {
+    background: #0d1117;
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: #38bdf8;
+    font-family: var(--font-mono);
+    word-break: break-all;
+}
+
+.qr-warning-box {
+    background: rgba(226, 26, 26, 0.1);
+    border: 1px solid rgba(226, 26, 26, 0.3);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    font-size: 11px;
+    line-height: 1.4;
+    color: #fca5a5;
+    text-align: left;
+}
+
+.modal-card .close-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+}
+
+/* ==========================================================================
+   Responsive Adaptations
+   ========================================================================== */
+@media (max-width: 768px) {
+    .app-header {
+        height: 50px;
+        padding: 0 10px;
+    }
+    .project-titles h1 {
+        font-size: 13px;
+        max-width: 170px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .project-titles .subtitle {
+        display: none;
+    }
+    .station-clock-widget {
+        display: none;
+    }
+    .author-tag {
+        display: none;
+    }
+    .action-btn {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+    .info-panel {
+        left: 10px;
+        right: 10px;
+        top: 10px;
+        width: auto;
+        max-width: none;
+        padding: 16px;
+    }
+    .controls-bar {
+        position: fixed;
+        bottom: max(12px, env(safe-area-inset-bottom, 12px));
+        left: 8px;
+        right: 8px;
+        width: auto;
+        max-width: none;
+        transform: none;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        display: flex;
+        justify-content: flex-start;
+        padding: 6px 8px;
+        gap: 6px;
+        border-radius: 14px;
+        z-index: 95;
+        scrollbar-width: none;
+    }
+    .controls-bar::-webkit-scrollbar {
+        display: none;
+    }
+    .ctrl-btn {
+        flex-shrink: 0;
+        padding: 6px 10px;
+        font-size: 11px;
+        gap: 6px;
+    }
+    .ctrl-btn span {
+        font-size: 11px;
+        white-space: nowrap;
+    }
+    .ar-floating-btn {
+        top: 12px;
+        right: 12px;
+        padding: 10px 16px;
+        font-size: 12px;
+    }
+}
+
+/* ==========================================================================
+   AR (Augmented Reality) Specific Mode Optimization
+   ========================================================================== */
+/* Ergonomic 2-row AR Control HUD */
+.ar-controls-pill {
+    position: absolute;
+    bottom: max(16px, env(safe-area-inset-bottom, 16px));
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    z-index: 1000;
+    background: rgba(13, 17, 23, 0.94);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1.5px solid rgba(56, 189, 248, 0.55);
+    border-radius: 20px;
+    padding: 7px 10px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65);
+    pointer-events: auto;
+    user-select: none;
+    -webkit-user-select: none;
+    max-width: calc(100vw - 32px);
+    width: max-content;
+}
+
+model-viewer[ar-status="session-started"] .ar-controls-pill,
+model-viewer[ar-status="object-placed"] .ar-controls-pill,
+body.ar-active .ar-controls-pill {
+    display: flex !important;
+}
+
+.ar-pill-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.ar-pill-btn {
+    background: rgba(255, 255, 255, 0.10);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 14px;
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex: 1;
+}
+
+.ar-pill-btn:active {
+    background: rgba(47, 129, 247, 0.35);
+    border-color: rgba(56, 189, 248, 0.6);
+    transform: scale(0.97);
+}
+
+.ar-pill-btn.ar-btn-primary {
+    background: rgba(31, 111, 235, 0.28);
+    border-color: rgba(56, 189, 248, 0.6);
+    font-weight: 600;
+    width: 100%;
+}
+
+.ar-pill-btn.ar-btn-primary:active {
+    background: rgba(31, 111, 235, 0.55);
+}
+
+/* ==========================================================================
+   AR Hotspots Visibility & Badges with Labels
+   ========================================================================== */
+/* By default in AR (or when ar-hotspots-hidden), hide all hotspots and labels */
+body.ar-active model-viewer.ar-hotspots-hidden .hotspot,
+body.ar-active model-viewer:not(.ar-hotspots-shown) .hotspot,
+model-viewer[ar-status="session-started"]:not(.ar-hotspots-shown) .hotspot,
+model-viewer[ar-status="object-placed"]:not(.ar-hotspots-shown) .hotspot,
+model-viewer.ar-hotspots-hidden .hotspot,
+body.ar-active .hotspot.hidden {
+    display: none !important;
+}
+
+/* When hotspots ARE toggled ON in AR (.ar-hotspots-shown):
+   Show neat circular badges and readable compact glassmorphism labels */
+body.ar-active model-viewer.ar-hotspots-shown .hotspot,
+model-viewer[ar-status="object-placed"].ar-hotspots-shown .hotspot,
+model-viewer[ar-status="session-started"].ar-hotspots-shown .hotspot {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+body.ar-active model-viewer.ar-hotspots-shown .hotspot-dot,
+model-viewer[ar-status="object-placed"].ar-hotspots-shown .hotspot-dot,
+model-viewer[ar-status="session-started"].ar-hotspots-shown .hotspot-dot {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    border-radius: 50% !important;
+    background: #0284c7 !important;
+    color: #ffffff !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    line-height: 20px !important;
+    text-align: center !important;
+    box-shadow: 0 0 0 2px #ffffff, 0 3px 8px rgba(0, 0, 0, 0.6) !important;
+    opacity: 1 !important;
+    animation: none !important;
+}
+
+body.ar-active model-viewer.ar-hotspots-shown .hotspot-label,
+model-viewer[ar-status="object-placed"].ar-hotspots-shown .hotspot-label,
+model-viewer[ar-status="session-started"].ar-hotspots-shown .hotspot-label {
+    display: inline-block !important;
+    background: rgba(13, 17, 23, 0.92) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(56, 189, 248, 0.65) !important;
+    color: #ffffff !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    padding: 3px 8px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6) !important;
+    white-space: nowrap !important;
+    pointer-events: none !important;
+    opacity: 1 !important;
+}
+
+/* AR Floor Placement Guidance Banner */
+.ar-placement-hint {
+    position: absolute;
+    top: max(20px, env(safe-area-inset-top, 20px));
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    align-items: center;
+    gap: 8px;
+    background: rgba(13, 17, 23, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid #38bdf8;
+    border-radius: 30px;
+    padding: 8px 16px;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 500;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    pointer-events: none;
+    text-align: center;
+    max-width: calc(100vw - 32px);
+    line-height: 1.3;
+}
+
+model-viewer[ar-status="session-started"] .ar-placement-hint {
+    display: flex;
+}
+
+model-viewer[ar-status="object-placed"] .ar-placement-hint {
+    display: none !important;
+}
+
+/* AR Mode Transparency and Full Viewport Optimizations */
+html.ar-active,
+body.ar-active,
+model-viewer[ar-status="session-started"],
+model-viewer[ar-status="object-placed"] {
+    background: transparent !important;
+    background-color: transparent !important;
+    --poster-color: transparent !important;
+}
+
+model-viewer[ar-status="session-started"] .snow-canvas {
+    display: none !important;
+}
+
+body.ar-active .controls-bar,
+body.ar-active .app-header {
+    display: none !important;
+}
+
+/* ==========================================================================
+   AR Mode Inspector Card Floating Bottom Sheet Overlay
+   ========================================================================== */
+body.ar-active .info-panel,
+model-viewer[ar-status="session-started"] .info-panel,
+model-viewer[ar-status="object-placed"] .info-panel {
+    position: absolute;
+    top: auto !important;
+    bottom: max(16px, env(safe-area-inset-bottom, 16px)) !important;
+    left: 50% !important;
+    transform: translateX(-50%) translateY(120%) !important;
+    width: min(400px, calc(100vw - 24px)) !important;
+    max-width: calc(100vw - 24px) !important;
+    background: rgba(13, 17, 23, 0.96) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1.5px solid rgba(56, 189, 248, 0.65) !important;
+    border-radius: 22px !important;
+    padding: 16px 18px !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.85) !important;
+    z-index: 2100 !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease !important;
+}
+
+body.ar-active .info-panel.visible,
+model-viewer[ar-status="session-started"] .info-panel.visible,
+model-viewer[ar-status="object-placed"] .info-panel.visible {
+    transform: translateX(-50%) translateY(0) !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+.panel-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 14px;
+}
+
+.panel-actions .focus-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: rgba(31, 111, 235, 0.35);
+    border: 1px solid rgba(56, 189, 248, 0.65);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 14px;
+    padding: 9px 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.panel-actions .focus-btn:active {
+    background: rgba(31, 111, 235, 0.65);
+    transform: scale(0.97);
+}
+
+.panel-actions .dismiss-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    color: #e6edf3;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 14px;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.panel-actions .dismiss-btn:active {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(0.97);
+}

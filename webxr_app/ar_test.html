@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>WebXR AR Диагностика и Тест (OnePlus 7 Pro / Android)</title>
+    <!-- Google Model Viewer Web Component с Smart AR Fallback -->
+    <script type="module" src="js/model-viewer.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0d1117;
+            --panel-bg: rgba(22, 27, 34, 0.92);
+            --border: rgba(255, 255, 255, 0.15);
+            --accent-green: #2ea043;
+            --accent-blue: #38bdf8;
+            --accent-yellow: #f1c40f;
+            --text-primary: #f0f6fc;
+            --text-secondary: #8b949e;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            overflow: hidden;
+            position: fixed;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+        }
+
+        .test-app {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        /* Compact Header */
+        .test-header {
+            height: 48px;
+            background: #161b22;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 14px;
+            z-index: 100;
+            flex-shrink: 0;
+        }
+
+        .header-title {
+            font-size: 13px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .badge-test {
+            background: #238636;
+            color: white;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .back-link {
+            color: var(--accent-blue);
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* 3D Viewport: Full screen and unobstructed */
+        .viewer-box {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+        }
+
+        model-viewer {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 35%, #243042 0%, #0d1117 80%);
+            --poster-color: transparent;
+        }
+
+        model-viewer[ar-status="session-started"],
+        model-viewer[ar-status="object-placed"],
+        body.ar-session-active,
+        html.ar-session-active {
+            background: transparent !important;
+            background-color: transparent !important;
+        }
+
+        .ar-placed-bar {
+            position: absolute;
+            bottom: max(20px, env(safe-area-inset-bottom, 20px));
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        model-viewer[ar-status="object-placed"] .ar-placed-bar {
+            display: flex;
+        }
+
+        .ar-hud-pill-btn {
+            background: rgba(13, 17, 23, 0.90);
+            backdrop-filter: blur(14px);
+            border: 1.5px solid rgba(56, 189, 248, 0.6);
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 24px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            transition: transform 0.15s;
+        }
+
+        .ar-hud-pill-btn:active {
+            transform: scale(0.96);
+            background: rgba(56, 189, 248, 0.25);
+        }
+
+        .ar-guidance-pill {
+            position: absolute;
+            bottom: max(24px, env(safe-area-inset-bottom, 24px));
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(13, 17, 23, 0.88);
+            backdrop-filter: blur(16px);
+            border: 1.5px solid rgba(56, 189, 248, 0.7);
+            color: #ffffff;
+            padding: 10px 18px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+            pointer-events: none;
+            display: none;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6);
+            white-space: nowrap;
+            z-index: 1000;
+        }
+
+        model-viewer[ar-status="session-started"] .ar-guidance-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        model-viewer[ar-status="object-placed"] .ar-guidance-pill {
+            display: none !important;
+        }
+
+        /* Collapsible Diagnostics Pill at Top */
+        .diag-pill-bar {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 80;
+        }
+
+        .diag-toggle-btn {
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(56, 189, 248, 0.5);
+            color: #ffffff;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        }
+
+        .diag-drawer {
+            display: none;
+            position: absolute;
+            top: 36px;
+            left: 0;
+            width: 280px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 11px;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.6);
+        }
+
+        .diag-drawer.open {
+            display: block;
+        }
+
+        .diag-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-family: var(--font-mono);
+            font-size: 10px;
+        }
+
+        .diag-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .status-ok { color: #3fb950; font-weight: 700; }
+        .status-warn { color: #d29922; font-weight: 700; }
+
+        /* Top-Right AR Launch Button */
+        .btn-ar-primary {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, #238636, #2ea043);
+            color: #ffffff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(46, 160, 67, 0.45);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 90;
+        }
+
+        /* Bottom Floating Bar: Model Selector + Camera Reset */
+        .bottom-bar {
+            position: absolute;
+            bottom: max(14px, env(safe-area-inset-bottom, 14px));
+            left: 10px;
+            right: 10px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            z-index: 85;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+        }
+
+        .model-selector-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: var(--text-secondary);
+            padding: 7px 4px;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: #2f81f7;
+            border-color: #58a6ff;
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        .btn-center-cam {
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #f0f6fc;
+            padding: 7px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .guidance-tip {
+            font-size: 11px;
+            color: #cbd5e1;
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        .guidance-tip strong {
+            color: #38bdf8;
+        }
+
+        /* In-AR HUD (during active WebXR session) */
+        .ar-hud-overlay {
+            position: fixed;
+            bottom: max(16px, env(safe-area-inset-bottom, 16px));
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            z-index: 1000;
+            width: calc(100vw - 24px);
+            max-width: 380px;
+        }
+
+        model-viewer[ar-status="session-started"] ~ .ar-hud-overlay,
+        model-viewer[ar-status="object-placed"] ~ .ar-hud-overlay,
+        body.ar-session-active .ar-hud-overlay {
+            display: flex;
+        }
+
+        .hud-status-card {
+            background: rgba(13, 17, 23, 0.92);
+            backdrop-filter: blur(12px);
+            border: 1px solid #38bdf8;
+            border-radius: 12px;
+            padding: 8px 14px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: #ffffff;
+            text-align: center;
+            width: 100%;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+        }
+
+        .hud-actions {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .hud-btn {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 20px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .hud-btn.primary {
+            background: #238636;
+            border-color: #3fb950;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-app">
+        <!-- Header -->
+        <header class="test-header">
+            <div class="header-title">
+                <span class="badge-test">ТЕСТ</span>
+                <span>WebXR AR Диагностика</span>
+            </div>
+            <a href="index.html" class="back-link">
+                <span>← К макету станции</span>
+            </a>
+        </header>
+
+        <!-- Main Viewport: clean and unobstructed -->
+        <main class="viewer-box">
+            <!-- model-viewer with automatic framing and tight bounds -->
+            <model-viewer
+                id="testViewer"
+                src="models/station_pavilion_mockup.glb"
+                alt="3D Тестовый объект для проверки WebXR"
+                camera-controls
+                auto-rotate
+                touch-action="pan-y"
+                ar
+                ar-modes="webxr scene-viewer quick-look"
+                ar-scale="auto"
+                ar-placement="floor"
+                shadow-intensity="1.5"
+                exposure="1.2"
+                tone-mapping="aces"
+                bounds="tight"
+                camera-orbit="40deg 75deg auto"
+                camera-target="auto auto auto">
+
+                <!-- Hidden default trigger -->
+                <button slot="ar-button" id="btnLaunchArWebxr" style="display:none;"></button>
+
+                <!-- AR In-Session Live Guidance Pill (DOM Overlay) -->
+                <div class="ar-guidance-pill" id="arGuidanceHint">
+                    <span>👆 Наведите на стол или пол и тапните для фиксации</span>
+                </div>
+                <div class="ar-placed-bar" id="arPlacedBar">
+                    <button type="button" id="btnArReanchor" class="ar-hud-pill-btn" title="Переместить макет">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></svg>
+                        <span>Переместить</span>
+                    </button>
+                    <button type="button" id="btnArToggleScale" class="ar-hud-pill-btn" title="Переключить масштаб">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                        <span id="arScaleText">1:10 (2.2 м)</span>
+                    </button>
+                </div>
+            </model-viewer>
+
+            <!-- Collapsible Top Diagnostics Pill -->
+            <div class="diag-pill-bar">
+                <button id="toggleDiagBtn" class="diag-toggle-btn">
+                    <span>✔ Диагностика OK</span>
+                    <span id="diagFoldIcon">▼</span>
+                </button>
+                <div id="diagDrawer" class="diag-drawer">
+                    <ul class="diag-list">
+                        <li><span>Устройство:</span> <span class="status-ok">OnePlus 7 Pro</span></li>
+                        <li><span>HTTPS:</span> <span id="diagHttps" class="status-ok">✔</span></li>
+                        <li><span>WebXR API:</span> <span id="diagWebxr" class="status-ok">✔</span></li>
+                        <li><span>immersive-ar:</span> <span id="diagImmersiveAr" class="status-ok">✔</span></li>
+                        <li><span>Статус AR:</span> <span id="diagArStatus" class="status-warn">not-presenting</span></li>
+                        <li><span>Smart Fallback:</span> <span class="status-ok">Активен (LineageOS)</span></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Top Right: Single Big AR Launch Button -->
+            <button id="btnWebXrTrigger" class="btn-ar-primary">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                <span>Смотреть в AR</span>
+            </button>
+
+            <!-- Bottom Floating Bar: 3 Models Switcher + Camera Reset -->
+            <div class="bottom-bar">
+                <div class="model-selector-row">
+                    <button id="tabMockup" class="tab-btn active">Макет 1.1 м</button>
+                    <button id="tabCube" class="tab-btn">Куб 30 см</button>
+                    <button id="tabFull" class="tab-btn">Станция 22 м</button>
+                    <button id="btnResetView" class="btn-center-cam" title="Центрировать камеру">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                        <span>Центр</span>
+                    </button>
+                </div>
+                <div class="guidance-tip">
+                    <span>💡 Вращайте пальцем для 3D обзора. Для запуска дополненной реальности нажмите <strong>«Смотреть в AR»</strong>.</span>
+                </div>
+            </div>
+
+            <!-- In-AR Live HUD Overlay (during active WebXR session) -->
+            <div id="arHud" class="ar-hud-overlay">
+                <div class="hud-status-card">
+                    <div id="hudArState">✔ AR активен. Макет размещен перед вами!</div>
+                    <div id="hudModelInfo" style="color:#38bdf8;font-size:10px;margin-top:2px;">Модель: Макет станции 1.1 м</div>
+                </div>
+                <div class="hud-actions">
+                    <button id="btnHudLight" class="hud-btn">💡 Подсветка: 1.8x</button>
+                    <button id="btnHudExit" class="hud-btn primary">Закрыть AR</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const viewer = document.getElementById('testViewer');
+        const diagHttps = document.getElementById('diagHttps');
+        const diagWebxr = document.getElementById('diagWebxr');
+        const diagImmersiveAr = document.getElementById('diagImmersiveAr');
+        const diagArStatus = document.getElementById('diagArStatus');
+
+        const btnWebXrTrigger = document.getElementById('btnWebXrTrigger');
+        const btnLaunchArWebxr = document.getElementById('btnLaunchArWebxr');
+
+        const tabMockup = document.getElementById('tabMockup');
+        const tabCube = document.getElementById('tabCube');
+        const tabFull = document.getElementById('tabFull');
+        const btnResetView = document.getElementById('btnResetView');
+
+        const hudArState = document.getElementById('hudArState');
+        const hudModelInfo = document.getElementById('hudModelInfo');
+        const btnHudLight = document.getElementById('btnHudLight');
+        const btnHudExit = document.getElementById('btnHudExit');
+        const toggleDiagBtn = document.getElementById('toggleDiagBtn');
+        const diagDrawer = document.getElementById('diagDrawer');
+
+        // 1. Diagnostics execution
+        async function runDiagnostics() {
+            diagHttps.textContent = window.isSecureContext ? '✔' : '✖';
+            if ('xr' in navigator) {
+                diagWebxr.textContent = '✔';
+                try {
+                    const supported = await navigator.xr.isSessionSupported('immersive-ar');
+                    diagImmersiveAr.textContent = supported ? '✔' : '✖';
+                } catch (e) {
+                    diagImmersiveAr.textContent = '✖';
+                }
+            } else {
+                diagWebxr.textContent = '✖';
+            }
+        }
+        runDiagnostics();
+
+        // 2. Launch WebXR
+        btnWebXrTrigger.addEventListener('click', () => {
+            btnLaunchArWebxr.click();
+        });
+
+        // 3. Model Switcher with Automatic Clean Framing
+        function switchModel(src, orbit, target, title, activeTab) {
+            [tabMockup, tabCube, tabFull].forEach(t => t.classList.remove('active'));
+            activeTab.classList.add('active');
+
+            viewer.src = src;
+            viewer.cameraOrbit = orbit;
+            viewer.cameraTarget = target;
+            hudModelInfo.textContent = 'Модель: ' + title;
+        }
+
+        tabMockup.addEventListener('click', () => {
+            // Tabletop 1.1m station mockup
+            switchModel(
+                'models/station_pavilion_mockup.glb',
+                '40deg 75deg auto',
+                'auto auto auto',
+                'Макет станции 1.1 м',
+                tabMockup
+            );
+        });
+
+        tabCube.addEventListener('click', () => {
+            // 30cm RZD Test Cube (комфортная дистанция 0.85м)
+            switchModel(
+                'models/test_cube.glb',
+                '30deg 65deg 0.85m',
+                'auto auto auto',
+                'Куб 30 см (RZD)',
+                tabCube
+            );
+        });
+
+        tabFull.addEventListener('click', () => {
+            // Full 22m Railway station
+            switchModel(
+                'models/station_pavilion.glb',
+                '40deg 75deg 26m',
+                '0m 2.0m 1.8m',
+                'Станция 22 м (Реальный)',
+                tabFull
+            );
+        });
+
+        btnResetView.addEventListener('click', () => {
+            viewer.cameraOrbit = 'auto auto auto';
+            viewer.cameraTarget = 'auto auto auto';
+        });
+
+        // 4. AR Status Tracking
+        viewer.addEventListener('ar-status', (event) => {
+            const status = event.detail.status;
+            diagArStatus.textContent = status;
+
+            if (status === 'session-started') {
+                document.body.classList.add('ar-session-active');
+                diagArStatus.className = 'status-ok';
+                hudArState.textContent = '✔ AR активен! Поиск пола или авто-размещение...';
+                viewer.exposure = 1.8;
+            } else if (status === 'object-placed') {
+                hudArState.textContent = '🎉 ОБЪЕКТ РАЗМЕЩЕН ПЕРЕД ВАМИ!';
+                hudArState.style.color = '#3fb950';
+            } else if (status === 'not-presenting') {
+                document.body.classList.remove('ar-session-active');
+                diagArStatus.className = 'status-warn';
+                viewer.exposure = 1.2;
+            }
+        });
+
+        // 5. In-AR Controls
+        let isHighLight = true;
+        btnHudLight.addEventListener('click', () => {
+            isHighLight = !isHighLight;
+            viewer.exposure = isHighLight ? 1.8 : 1.2;
+            btnHudLight.textContent = isHighLight ? '💡 Подсветка: 1.8x' : '💡 Подсветка: 1.2x';
+        });
+
+        btnHudExit.addEventListener('click', () => {
+            window.location.reload();
+        });
+
+        toggleDiagBtn.addEventListener('click', () => {
+            diagDrawer.classList.toggle('open');
+        });
+
+        // 6. In-AR Controls Hook
+        const btnArReanchor = document.getElementById('btnArReanchor');
+        const btnArToggleScale = document.getElementById('btnArToggleScale');
+        const arScaleText = document.getElementById('arScaleText');
+
+        if (btnArReanchor) {
+            btnArReanchor.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (viewer.reanchorAR) viewer.reanchorAR();
+            });
+        }
+
+        if (btnArToggleScale) {
+            btnArToggleScale.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (viewer.toggleARScale) {
+                    const newScale = viewer.toggleARScale();
+                    if (newScale > 0.5) {
+                        arScaleText.textContent = '1:1 (22 м)';
+                    } else if (newScale > 0.08) {
+                        arScaleText.textContent = '1:10 (2.2 м)';
+                    } else {
+                        arScaleText.textContent = '1:20 (1.1 м)';
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>WebXR: Архитектурный макет пассажирского павильона ж/д станции</title>
+    <!-- Google Model Viewer Web Component (локальная офлайн-версия v3.5.0) -->
+    <script type="module" src="js/model-viewer.min.js"></script>
+    <!-- QRCode.js (локальная офлайн-версия) -->
+    <script src="js/qrcode.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Top Header Navigation -->
+    <header class="app-header">
+        <div class="header-left">
+            <div class="rzd-badge">ДВГУПС · ЦТИГ</div>
+            <div class="project-titles">
+                <h1>Пассажирский павильон ж/д станции</h1>
+                <p class="subtitle">Интерактивный WebXR архитектурный макет в дополненной реальности (AR)</p>
+            </div>
+        </div>
+        <div class="header-center">
+            <div class="station-clock-widget">
+                <span class="clock-icon">🕒</span>
+                <span id="liveClock" class="clock-time">--:--:--</span>
+                <span id="liveTemp" class="clock-temp">-14°C</span>
+                <span class="clock-status">Путь 1 · График</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="author-tag">
+                <span class="author-name">Болтутин В.В.</span>
+                <span class="author-group">гр. БЗИ45ТВР</span>
+            </div>
+            <button id="btn-qr" class="action-btn" title="Открыть на смартфоне">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                <span>AR на телефон</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main 3D Model-Viewer Container -->
+    <main class="viewer-container">
+        <model-viewer
+            id="stationViewer"
+            src="models/station_pavilion.glb"
+            alt="Архитектурный макет пассажирского павильона железнодорожной станции"
+            camera-controls
+            touch-action="pan-y"
+            auto-rotate
+            auto-rotate-delay="3000"
+            rotation-per-second="15deg"
+            shadow-intensity="1.5"
+            shadow-softness="0.4"
+            exposure="1.0"
+            tone-mapping="aces"
+            camera-orbit="40deg 75deg 26m"
+            camera-target="0m 2.0m 1.8m"
+            min-camera-orbit="auto auto 3m"
+            max-camera-orbit="auto auto 50m"
+            field-of-view="35deg"
+            ar
+            ar-modes="webxr scene-viewer quick-look"
+            ar-scale="auto"
+            ar-placement="floor"
+            poster="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%' fill='%23111418'></svg>">
+
+            <!-- AR Launch Button (Default WebXR trigger) -->
+            <button slot="ar-button" id="ar-button" class="ar-floating-btn">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                <span>Смотреть в AR</span>
+            </button>
+
+            <!-- AR Floor Placement Guidance Banner -->
+            <div id="arPlacementHint" class="ar-placement-hint">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+                <span>👆 Наведите камеру на стол или пол и тапните для фиксации</span>
+            </div>
+
+            <!-- In-AR Interactive Control Pill (Visible only during AR session, 2-row ergonomic mobile HUD) -->
+            <div id="arControlsPill" class="ar-controls-pill">
+                <div class="ar-pill-row">
+                    <button type="button" id="btnArModeToggle" class="ar-pill-btn ar-btn-primary" title="Переключить режим касания: Перемещение / Вращение">
+                        <svg id="arModeIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></svg>
+                        <span id="arModeText">Режим: Перемещение</span>
+                    </button>
+                </div>
+                <div class="ar-pill-row">
+                    <button type="button" id="btnArToggleHotspots" class="ar-pill-btn" title="Показать или скрыть информационные метки в AR">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                        <span id="arHotspotsText">Метки: Выкл</span>
+                    </button>
+                    <button type="button" id="btnArScaleToggle" class="ar-pill-btn" title="Переключить масштаб макета станции">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                        <span id="arScaleText">1:10 (2.2 м)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading Progress Bar -->
+            <div id="loadingBar" slot="progress-bar" class="progress-container">
+                <div class="progress-bar-fill"></div>
+            </div>
+
+            <!-- Interactive 3D Hotspots -->
+            <!-- 1. Павильон ожидания -->
+            <button class="hotspot" slot="hotspot-pavilion"
+                    data-position="0m 3.6m 2.9m"
+                    data-normal="0 1 0"
+                    data-orbit="25deg 70deg 10m"
+                    data-target="0m 2.2m 2.9m"
+                    data-title="Пассажирский павильон ожидания"
+                    data-desc="Модульная металлоконструкция из профильной стали. Ветрозащитные экраны из ударопрочного закаленного триплекс-стекла. Оборудован эргономичной деревянной скамьей и козырьком с организованным водоотводом.">
+                <div class="hotspot-dot">1</div>
+                <div class="hotspot-label">Павильон ожидания</div>
+            </button>
+
+            <!-- 2. Пандус безбарьерной среды -->
+            <button class="hotspot" slot="hotspot-ramp"
+                    data-position="-9.0m 0.85m 2.7m"
+                    data-normal="0 1 0"
+                    data-orbit="-65deg 75deg 11m"
+                    data-target="-9.0m 0.6m 2.7m"
+                    data-title="Пандус доступной среды (МГН)"
+                    data-desc="Обеспечивает беспрепятственный доступ маломобильных групп пассажиров по СП 59.13330. Нормативный уклон 1:13, нескользящее бетонное покрытие, двойные поручни из нержавеющей стали на высотах 0.7 м и 0.9 м.">
+                <div class="hotspot-dot">2</div>
+                <div class="hotspot-label">Пандус МГН</div>
+            </button>
+
+            <!-- 3. Тактильная полоса безопасности -->
+            <button class="hotspot" slot="hotspot-tactile"
+                    data-position="2.0m 0.9m 1.65m"
+                    data-normal="0 1 0"
+                    data-orbit="10deg 60deg 7m"
+                    data-target="2.0m 0.9m 1.65m"
+                    data-title="Тактильная полоса безопасности"
+                    data-desc="Предупредительный тактильный наземный указатель по ГОСТ Р 52875-2018. Сигнальный желтый цвет с продольными направляющими рифами. Расположена на расстоянии 0.75 м от края платформы.">
+                <div class="hotspot-dot">3</div>
+                <div class="hotspot-label">Тактильная полоса</div>
+            </button>
+
+            <!-- 4. Железнодорожный путь -->
+            <button class="hotspot" slot="hotspot-track"
+                    data-position="0m 0.8m -0.7m"
+                    data-normal="0 1 0"
+                    data-orbit="-30deg 65deg 9m"
+                    data-target="0m 0.8m -0.7m"
+                    data-title="Железнодорожный путь колеи 1520 мм"
+                    data-desc="Звено путевой решетки: термоупрочненные рельсы типа Р65, железобетонные шпалы Ш-1 с раздельно-клеммными скреплениями КБ-65 на призме из щебеночного гранитного балласта.">
+                <div class="hotspot-dot">4</div>
+                <div class="hotspot-label">Путь Р65</div>
+            </button>
+
+            <!-- 5. Электронное табло расписания -->
+            <button class="hotspot" slot="hotspot-display"
+                    data-position="0m 3.2m 2.1m"
+                    data-normal="0 0 -1"
+                    data-orbit="0deg 80deg 6m"
+                    data-target="0m 3.2m 2.1m"
+                    data-title="Электронное навигационное табло"
+                    data-desc="Двусторонний светодиодный дисплей повышенной яркости с янтарной матрицей. Отображает маршрут, номер поезда, время прибытия, платформу и текущую температуру.">
+                <div class="hotspot-dot">5</div>
+                <div class="hotspot-label">Табло расписания</div>
+            </button>
+
+            <!-- 6. Светодиодная опора освещения -->
+            <button class="hotspot" slot="hotspot-light"
+                    data-position="4.8m 4.6m 3.5m"
+                    data-normal="0 -1 0"
+                    data-orbit="60deg 70deg 10m"
+                    data-target="4.8m 3.5m 3.5m"
+                    data-title="Опора LED-освещения платформы"
+                    data-desc="Консольная опора освещения с энергоэффективным светодиодным модулем. Обеспечивает уровень освещенности пассажирской платформы не менее 50 лк по СП 52.13330.">
+                <div class="hotspot-dot">6</div>
+                <div class="hotspot-label">Освещение LED</div>
+            </button>
+
+            <!-- 7. Торцевой лестничный сход -->
+            <button class="hotspot" slot="hotspot-stairs"
+                    data-position="7.6m 0.65m 2.7m"
+                    data-normal="1 0 0"
+                    data-orbit="65deg 70deg 9m"
+                    data-target="7.6m 0.45m 2.7m"
+                    data-title="Торцевой лестничный сход"
+                    data-desc="Обеспечивает безопасный и комфортный сход пассажиров по СП 225.1326000 и СП 59.13330. Марш из 5 ступеней (подступенок 170 мм, проступь 300 мм), тактильные указатели, противоскользящие контрастные кромки и нержавеющие перила на высотах 0.7 и 0.9 м.">
+                <div class="hotspot-dot">7</div>
+                <div class="hotspot-label">Лестничный сход</div>
+            </button>
+
+            <!-- 8. Станционная навигация ОАО «РЖД» -->
+            <button class="hotspot" slot="hotspot-signboard"
+                    data-position="-4.5m 2.5m 4.15m"
+                    data-normal="0 0 -1"
+                    data-orbit="-30deg 76deg 6.5m"
+                    data-target="-4.5m 1.9m 4.15m"
+                    data-title="Станционная навигация ОАО «РЖД»"
+                    data-desc="Официальный путевой указатель остановочного пункта «о.п. ДВГУПС» в корпоративном стиле ОАО «РЖД» и защитное леерное ограждение платформы высотой 1.10 м по СП 59.13330.">
+                <div class="hotspot-dot">8</div>
+                <div class="hotspot-label">Навигация «о.п. ДВГУПС»</div>
+            </button>
+
+            <!-- 9. Колонна экстренной связи Инфо-SOS -->
+            <button class="hotspot" slot="hotspot-sos"
+                    data-position="3.8m 2.2m 3.8m"
+                    data-normal="0 0 -1"
+                    data-orbit="40deg 75deg 5.5m"
+                    data-target="3.8m 1.6m 3.8m"
+                    data-title="Колонна экстренной связи «Инфо-SOS»"
+                    data-desc="Информационно-справочная колонна экстренного вызова «Инфо-SOS» с переговорным устройством, кнопками связи с дежурным и стробоскопическим сигнальным маяком оповещения.">
+                <div class="hotspot-dot">9</div>
+                <div class="hotspot-label">Колонна «Инфо-SOS»</div>
+            </button>
+
+            <!-- Engineering Dimension Lines & Rulers (ГОСТ 9238 / СТО РЖД) -->
+            <div class="dim-hotspot hidden" slot="hotspot-dim-len" data-position="0m 0.95m 0.9m" data-normal="0 0 -1">
+                <span class="dim-badge">|← Длина платформы: 14.00 м →|</span>
+            </div>
+            <div class="dim-hotspot hidden" slot="hotspot-dim-width" data-position="-6.8m 0.95m 2.7m" data-normal="0 1 0">
+                <span class="dim-badge">|← Ширина платформы: 3.40 м →|</span>
+            </div>
+            <div class="dim-hotspot hidden" slot="hotspot-dim-h" data-position="-7.1m 0.45m 0.9m" data-normal="-1 0 0">
+                <span class="dim-badge">↕ Высота УВГР: 0.85 м</span>
+            </div>
+            <div class="dim-hotspot hidden" slot="hotspot-dim-gauge" data-position="0m 0.72m -0.7m" data-normal="0 1 0">
+                <span class="dim-badge">|← Колея: 1520 мм (ГОСТ) →|</span>
+            </div>
+            <div class="dim-hotspot hidden" slot="hotspot-dim-tactile" data-position="2.0m 0.92m 1.35m" data-normal="0 1 0">
+                <span class="dim-badge">↔ Полоса безопасности: 0.75 м</span>
+            </div>
+            <div class="dim-hotspot hidden" slot="hotspot-dim-pav" data-position="0m 3.85m 2.9m" data-normal="0 1 0">
+                <span class="dim-badge">|← Павильон: 5.80 × 1.90 м, h = 2.70 м →|</span>
+            </div>
+            <div class="dim-hotspot hidden" slot="hotspot-dim-pole" data-position="4.8m 3.2m 3.5m" data-normal="0 0 -1">
+                <span class="dim-badge">↕ Опора освещения: 5.40 м</span>
+            </div>
+            <div class="dim-hotspot hidden" slot="hotspot-dim-stairs" data-position="7.7m 0.85m 4.2m" data-normal="0 1 0">
+                <span class="dim-badge">|← Ступени: 5 × 170×300 мм (СП 59) →|</span>
+            </div>
+            <div class="dim-hotspot hidden" slot="hotspot-dim-fence" data-position="-2.0m 1.65m 4.35m" data-normal="0 0 1">
+                <span class="dim-badge">↕ Ограждение: 1.10 м (СП 59)</span>
+            </div>
+
+        <!-- Floating Side Inspector / Details Card -->
+        <aside id="infoPanel" class="info-panel">
+            <div class="panel-header">
+                <span class="panel-tag">Элемент макета</span>
+                <button id="closePanelBtn" class="close-btn" aria-label="Закрыть">&times;</button>
+            </div>
+            <h2 id="infoTitle">Пассажирский павильон</h2>
+            <p id="infoDesc">Выберите точку на 3D-модели или используйте панель управления снизу для инспекции ключевых узлов железнодорожной инфраструктуры.</p>
+            <div class="specs-grid">
+                <div class="spec-item">
+                    <span class="spec-label">Норматив</span>
+                    <span id="specStandard" class="spec-val">ГОСТ / СП</span>
+                </div>
+                <div class="spec-item">
+                    <span class="spec-label">Материал</span>
+                    <span id="specMaterial" class="spec-val">PBR Сталь / Стекло</span>
+                </div>
+            </div>
+            <div class="panel-actions">
+                <button id="btnFocusItem" class="focus-btn" title="Центрировать выбранный узел перед камерой">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                    <span>Центрировать</span>
+                </button>
+                <button id="btnDismissCard" class="dismiss-btn" title="Закрыть карточку описания">
+                    <span>Закрыть</span>
+                </button>
+            </div>
+        </aside>
+
+        </model-viewer>
+
+        <!-- Snow Particle Canvas Overlay (outside model-viewer for clean WebXR DOM Overlay) -->
+        <canvas id="snowCanvas" class="snow-canvas"></canvas>
+
+        <!-- Guided Tour Dynamic Banner Overlay -->
+        <div id="tourBanner" class="tour-banner hidden">
+            <div class="tour-header">
+                <span class="tour-tag">РЕЖИМ АВТО-ЭКСКУРСИИ</span>
+                <span id="tourStepText" class="tour-step-text">Узел 1 из 9: Пассажирский павильон ожидания</span>
+                <button id="btnStopTour" class="tour-close-btn" title="Остановить экскурсию">&times;</button>
+            </div>
+            <div class="tour-progress-track">
+                <div id="tourProgressBar" class="tour-progress-fill"></div>
+            </div>
+        </div>
+
+
+
+        <!-- Bottom Engineering Controls Bar -->
+        <div class="controls-bar">
+            <button id="btnTour" class="ctrl-btn highlight" title="Запустить автоматическую экскурсию по узлам">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <span id="tourBtnLabel">Экскурсия</span>
+            </button>
+            <button id="btnDimensions" class="ctrl-btn" title="Показать или скрыть инженерные габариты по ГОСТ">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20M2 5v14M22 5v14M7 9v6M12 9v6M17 9v6"/></svg>
+                <span>Габариты ГОСТ</span>
+            </button>
+            <button id="btnResetCamera" class="ctrl-btn" title="Сбросить ракурс к общему виду">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                <span>Общий вид</span>
+            </button>
+            <button id="btnToggleRotate" class="ctrl-btn active" title="Включение или выключение вращения сцены">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                <span>Вращение</span>
+            </button>
+            <button id="btnToggleHotspots" class="ctrl-btn active" title="Показать или скрыть информационные метки">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span>Метки (9)</span>
+            </button>
+            <button id="btnSeason" class="ctrl-btn active" title="Переключение сезона (Зима / Лето)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"/></svg>
+                <span id="seasonLabel">Сезон: Зима</span>
+            </button>
+            <button id="btnSoundChime" class="ctrl-btn" title="Воспроизвести звуковой сигнал вокзала">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                <span>Звук вокзала</span>
+            </button>
+            <button id="btnToggleTheme" class="ctrl-btn" title="Переключить режим освещения (День / Ночь)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                <span>День / Ночь</span>
+            </button>
+            <button id="btnScaleMode" class="ctrl-btn" title="Переключить масштаб модели">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                <span id="scaleLabel">Макет 1:50</span>
+            </button>
+        </div>
+    </main>
+
+    <!-- QR Code Modal Dialog -->
+    <div id="qrModal" class="modal-overlay">
+        <div class="modal-card">
+            <button id="closeQrBtn" class="close-btn" aria-label="Закрыть">&times;</button>
+            <div class="modal-badge">Запуск на смартфоне</div>
+            <h3>Подключение со смартфона</h3>
+            <p class="modal-hint">Телефон и компьютер должны быть в одной сети Wi-Fi (или используйте публичную HTTPS ссылку).</p>
+            
+            <div class="qr-mode-switch">
+                <button id="btnModeWifi" class="mode-tab active">Wi-Fi (192.168.100.237)</button>
+                <button id="btnModeCustom" class="mode-tab">Своя ссылка (HTTPS)</button>
+            </div>
+
+            <div class="qr-input-row" id="customUrlRow" style="display: none;">
+                <input type="text" id="targetUrlInput" placeholder="https://ваш-логин.github.io/webxr/" class="url-input">
+                <button id="btnApplyUrl" class="apply-btn">OK</button>
+            </div>
+
+            <div id="qrcode" class="qr-box"></div>
+
+            <div class="qr-current-link">
+                <span class="link-label">Адрес:</span>
+                <code id="activeUrlLabel">http://192.168.100.237:8000/index.html</code>
+            </div>
+
+            <div class="qr-warning-box">
+                <p><strong>Важное примечание по AR:</strong> В локальной сети по Wi-Fi на телефоне откроется 3D-макет с полным интерактивом. Для активации камеры и кнопки <em>«Смотреть в AR»</em> мобильный браузер требует <strong>HTTPS</strong> (разместите на бесплатном GitHub Pages).</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- App JavaScript Logic -->
+    <script src="app.js"></script>
+</body>
+</html>
